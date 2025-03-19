@@ -22,8 +22,4 @@ To clone and explore the repository locally, run:
 ```bash
 git clone git@github.com:timedilationv2/nadoxdocumentation.git
 cd nadoxdocumentation
-
-arsalankhan
-artifix labs
-Washington,USA
-
+```
