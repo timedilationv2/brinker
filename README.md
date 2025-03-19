@@ -23,3 +23,7 @@ To clone and explore the repository locally, run:
 git clone git@github.com:timedilationv2/nadoxdocumentation.git
 cd nadoxdocumentation
 ```
+[← Architecture](https://github.com/timedilationv2/nadoxdocumentation/blob/main/docs/architecture.md) | [Home](https://github.com/timedilationv2/nadoxdocumentation) | [Next → Usage Guide](https://github.com/timedilationv2/nadoxdocumentation/blob/main/docs/usage.md) | [Project Information](https://github.com/timedilationv2/nadoxdocumentation)
+
+**Author:** Arsalan Khan | **Company:** Artifi Labs | **Location:** Lynnwood, WA | **Year:** 2025
+
