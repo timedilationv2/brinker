@@ -1,7 +1,3 @@
-#!/bin/bash
-
-# Overwrite README.md with an updated repository overview
-cat <<'EOF' > README.md
 # NadoxDocumentation
 
 Welcome to **NadoxDocumentation**. This repository houses all the files for the project—from documentation and source code to tests and scripts—organized for clarity and ease of use.
@@ -26,3 +22,4 @@ To clone and explore the repository locally, run:
 ```bash
 git clone git@github.com:timedilationv2/nadoxdocumentation.git
 cd nadoxdocumentation
+
