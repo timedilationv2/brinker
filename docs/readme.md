@@ -1,24 +1,33 @@
-# NadoxDocumentation
+#!/bin/bash
 
-Welcome to **NadoxDocumentation**. This repository houses all the files for the project—from documentation and source code to tests and scripts—organized for clarity and ease of use.
+# Create the docs folder if it doesn't exist
+mkdir -p docs
 
-## Repository Overview
+# Create or overwrite architecture.md
+cat <<'EOF' > docs/architecture.md
+# Architecture
 
-The repository is organized as follows:
-- **[docs/](docs/)** – Documentation files including architecture, setup, and usage guides.
-- **[src/](src/)** – Source code for the project.
-- **[tests/](tests/)** – Unit and integration tests.
-- **[scripts/](scripts/)** – Utility and automation scripts.
+This document outlines the overall architecture of NadoxDocumentation. It describes the cloud-powered API system, the underlying backend technologies, and the integration with modern cloud services. The design emphasizes modularity, high performance, and scalability.
 
-For a full view of all files and folders, please visit the [repository file tree](https://github.com/timedilationv2/nadoxdocumentation/tree/main).
+**Key Components:**
+- **Cloud API:** Uses AWS Lambda, API Gateway, and CloudFront.
+- **Modular Structure:** Separates documentation, source code, and tests.
+- **Integration:** Connects backend services with open-source tools.
+EOF
 
-## About the Project
+# Create or overwrite setup.md
+cat <<'EOF' > docs/setup.md
+# Setup Guide
 
-**NadoxDocumentation** is a cloud-powered API documentation system built with modern backend technologies. It aims to streamline the development process and provide comprehensive documentation for both users and contributors.
+This guide provides step-by-step instructions to set up NadoxDocumentation on your local machine or server.
 
-## Getting Started
+**Prerequisites:**
+- Git installed
+- Configured cloud environment (e.g., AWS)
+- Familiarity with backend development
 
-To clone and explore the repository locally, run:
-```bash
-git clone git@github.com:timedilationv2/nadoxdocumentation.git
-cd nadoxdocumentation
+**Installation Steps:**
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:timedilationv2/nadoxdocumentation.git
+   cd nadoxdocumentation
