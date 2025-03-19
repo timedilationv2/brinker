@@ -1,19 +1,28 @@
+#!/bin/bash
+
+# Overwrite README.md with an updated repository overview
+cat <<'EOF' > README.md
 # NadoxDocumentation
 
-**NadoxDocumentation** is a cloud-powered API documentation system developed by **Arsalan Khan** ([@timedilationv2](https://github.com/timedilationv2)). It delivers **real-time updates, enhanced search, and API-driven documentation** using a **serverless architecture**.
+Welcome to **NadoxDocumentation**. This repository houses all the files for the project—from documentation and source code to tests and scripts—organized for clarity and ease of use.
 
-## Features
+## Repository Overview
 
-| **Feature**               | **Description**  |
-|---------------------------|-------------------------------------------------|
-| **Serverless API**        | AWS Lambda and API Gateway dynamically serve documentation. |
-| **Real-Time Updates**     | GitHub Actions ensures automated synchronization. |
-| **Advanced Search**       | Integrated with AWS CloudSearch for full-text search. |
-| **Performance & Scaling** | AWS CloudFront optimizes content delivery. |
+The repository is organized as follows:
+- **[docs/](docs/)** – Documentation files including architecture, setup, and usage guides.
+- **[src/](src/)** – Source code for the project.
+- **[tests/](tests/)** – Unit and integration tests.
+- **[scripts/](scripts/)** – Utility and automation scripts.
 
-## Installation
+For a full view of all files and folders, please visit the [repository file tree](https://github.com/timedilationv2/nadoxdocumentation/tree/main).
 
-Clone the repository using SSH:
+## About the Project
+
+**NadoxDocumentation** is a cloud-powered API documentation system built with modern backend technologies. It aims to streamline the development process and provide comprehensive documentation for both users and contributors.
+
+## Getting Started
+
+To clone and explore the repository locally, run:
 ```bash
 git clone git@github.com:timedilationv2/nadoxdocumentation.git
 cd nadoxdocumentation
