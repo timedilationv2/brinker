@@ -13,6 +13,6 @@ This guide provides step-by-step instructions to set up NadoxDocumentation on yo
    git clone git@github.com:timedilationv2/nadoxdocumentation.git
    cd nadoxdocumentation
 Follow additional configuration instructions provided in the repository documentation.
-← Architecture | Home | Next → Usage Guide
+| Architecture | Home | Next → Usage Guide
 
 | arsalankhan | artifilabs | lynnwood | WA | 2025 | 
