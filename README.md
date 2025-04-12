@@ -1,4 +1,4 @@
-# NadoxDocumentation
+# Brinker
 
 Welcome to **NadoxDocumentation**. This repository houses all the files for the project—from documentation and source code to tests and scripts—organized for clarity and ease of use.
 
