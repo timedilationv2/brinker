@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P01 Avionics Suite: Technical Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Using Inter font for a clean, Notion-like aesthetic */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcfcfc; /* Slightly off-white background */
+        }
+
+        /* Styling for the main content sections for better separation */
+        .main-section {
+            margin-bottom: 4rem; /* Increased vertical spacing between sections */
+        }
+
+        /* Active navigation link style in the sidebar */
+        .nav-link.active {
+            background-color: #f1f1f1; /* Subtle grey for active state */
+            color: #1f2937; /* Darker text for active link */
+        }
+        
+        /* Chart container with responsive height */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px; /* Reduced max-width for a more compact chart */
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+        }
+        @media (min-width: 640px) {
+            .chart-container {
+                height: 280px;
+            }
+        }
+
+        /* Status badge styles for severity */
+        .severity-low { background-color: #fefce8; color: #a16207; }
+        .severity-medium { background-color: #fff7ed; color: #c2410c; }
+        
+        /* Status badge styles for pass/conditional */
+        .status-pass { color: #166534; background-color: #f0fdf4; }
+        .status-conditional { color: #9a3412; background-color: #fff7ed; }
+
+        /* Notion-style callout block for the documentation section */
+        .notion-callout {
+            background-color: #f8f7f6;
+            border: 1px solid #edeceb;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="relative min-h-screen md:flex">
+        <!-- Mobile Header & Menu Button -->
+        <div class="bg-white text-gray-800 flex justify-between md:hidden sticky top-0 z-20 border-b border-gray-200">
+            <a href="#" class="block p-4 font-bold text-gray-900">P01 Technical Assessment</a>
+            <button id="mobile-menu-button" class="p-4 focus:outline-none focus:bg-gray-100">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Sidebar (Notion-style) -->
+        <aside id="sidebar" class="bg-white text-gray-600 w-64 space-y-2 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out z-30 border-r border-gray-200">
+            <div class="px-4 mb-4">
+                 <a href="#" class="text-gray-900 flex items-center space-x-2">
+                    <svg class="w-7 h-7 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                    </svg>
+                    <span class="text-lg font-semibold">Technical Assessment</span>
+                </a>
+                <p class="text-xs text-gray-500 mt-1">CBJ800 "Pegasus"</p>
+            </div>
+           
+            <nav class="px-2">
+                <a href="#dashboard" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Assessment Overview</a>
+                <a href="#systems" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Systems</a>
+                <a href="#deficiencies" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Deficiencies</a>
+                <a href="#compliance" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Compliance</a>
+                <a href="#recommendations" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Recommendations</a>
+                <a href="#documentation" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">Documentation</a>
+                <a href="#faq" class="nav-link text-sm font-medium block py-2 px-2 rounded transition duration-200 hover:bg-gray-100">FAQ</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="flex-1">
+            <main class="p-6 sm:p-8 md:p-12">
+                <section id="dashboard" class="main-section">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Assessment Overview</h1>
+                    <p class="text-base text-gray-500 mb-8">A high-level summary of the technical assessment for the CBJ800 Prototype P01 avionics suite.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-5 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-500">Aircraft</h3>
+                            <p class="text-2xl font-semibold text-gray-900 mt-1">CBJ800 "Pegasus"</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-500">Phase</h3>
+                            <p class="text-2xl font-semibold text-gray-900 mt-1">Prototype P01</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-500">Critical Failures</h3>
+                            <p class="text-2xl font-semibold text-green-600 mt-1">0</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-500">Deficiencies</h3>
+                            <p class="text-2xl font-semibold text-amber-600 mt-1">5</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg border border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900 mb-2">Overall Compliance Status</h2>
+                        <p class="text-sm text-gray-500 mb-4">Breakdown of system compliance against regulatory standards.</p>
+                        <div class="chart-container">
+                            <canvas id="complianceChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="systems" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">System Status</h2>
+                    <p class="text-base text-gray-500 mb-8">Explore functional test results for each major avionics subsystem. Click to expand.</p>
+                    <div id="systems-accordion" class="space-y-2"></div>
+                </section>
+
+                <section id="deficiencies" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Deficiency Tracker</h2>
+                    <p class="text-base text-gray-500 mb-8">Summary of non-critical issues. Use filters to focus on issues by severity.</p>
+                    <div class="flex space-x-2 mb-4">
+                        <button data-severity="all" class="filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm font-medium">All</button>
+                        <button data-severity="Medium" class="filter-btn bg-white text-gray-600 px-3 py-1 rounded-md text-sm font-medium border border-gray-300">Medium</button>
+                        <button data-severity="Low" class="filter-btn bg-white text-gray-600 px-3 py-1 rounded-md text-sm font-medium border border-gray-300">Low</button>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deficiencies-table-body" class="bg-white divide-y divide-gray-200">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="compliance" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Regulatory Compliance</h2>
+                    <p class="text-base text-gray-500 mb-8">Conformance review against key civil aviation standards to assess certification readiness.</p>
+                    <div id="compliance-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </section>
+
+                <section id="recommendations" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Recommendations & Milestones</h2>
+                    <p class="text-base text-gray-500 mb-8">Recommended actions and strategic milestones based on inspection findings.</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Immediate Technical Actions</h3>
+                            <ul id="tech-recommendations" class="space-y-4"></ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Developmental Milestones</h3>
+                            <ul id="dev-milestones" class="space-y-4"></ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="documentation" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Source Documentation</h2>
+                    <p class="text-base text-gray-500 mb-8">The original technical report is available for full, detailed context of the inspection findings.</p>
+                    <div class="notion-callout">
+                        <div class="flex-shrink-0">
+                            <svg class="w-8 h-8 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-1">View Original Report</h3>
+                            <p class="text-sm text-gray-600 mb-4">Access the full PDF document on GitHub to review the source material in its original format.</p>
+                            <a href="https://github.com/timedilationv2/flight-deckavionics/blob/main/FLIGHT%20DECK%20AND%20AVIONICS%20SYSTEMS.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex items-center bg-amber-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-700 transition-colors">
+                                Open PDF in New Tab
+                                <svg class="w-4 h-4 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-4.5 0V6.375c0-.621.504-1.125 1.125-1.125h4.125" /></svg>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="faq" class="main-section hidden">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h2>
+                    <p class="text-base text-gray-500 mb-8">Answers to common questions about this inspection report and the P01 prototype.</p>
+                    <div id="faq-accordion" class="space-y-2"></div>
+                </section>
+            </main>
+            <footer class="bg-white mt-8 border-t border-gray-200">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-gray-500 text-xs">
+                    <p>Interactive Report generated from "Technical Inspection Report, CBJ800XX" by Arsalan Khan.</p>
+                    <p>&copy; 2018 AVIC. All rights reserved.</p>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const appData = {
+                systems: [
+                    { name: "Flight Display System", status: "Pass", details: "Dual PFDs, MFDs, EFIS controllers. All units powered on successfully with resolution and brightness within expected ranges. Minor cosmetic screen burn noted on one MFD, does not affect function." },
+                    { name: "Navigation System", status: "Pass", details: "Triple IRS, GPS/WAAS, VOR/ILS receivers. Triple IRS initialized with valid, minimal-jitter outputs. GPS achieved lock on 9+ satellites quickly." },
+                    { name: "Communication Systems", status: "Conditional Pass", details: "Dual VHF, HF, SATCOM interfaces. VHF radios demonstrated excellent clarity. HF system interface is present, but antenna loop was not tested. SATCOM is a stub only with incomplete wiring." },
+                    { name: "Surveillance Systems", status: "Pass", details: "Mode S transponder with ADS-B Out capability. Successfully broadcasted Mode S with all static fields populated correctly." },
+                    { name: "Autopilot / FMS", status: "Conditional Pass", details: "2-axis autopilot stub and FMS shell. Basic flight plan logic and route sequencing simulations were successful. Full integration with flight controls is pending." },
+                    { name: "Electrical Buses", status: "Pass", details: "AC and DC buses, circuit breakers, backup battery interface. Nominal voltage levels observed across all buses. Breaker panel wiring visually compliant with minor label inconsistencies." },
+                    { name: "Standby Instrumentation", status: "Pass", details: "Mechanical altimeter, attitude indicator, airspeed indicator. All mechanical readings were responsive. Final calibration is pending." }
+                ],
+                deficiencies: [
+                    { id: "AVX-01", severity: "Low", description: "HF antenna interface absent; only mounting bracket installed.", recommendation: "Await installation in next prototype cycle." },
+                    { id: "AVX-02", severity: "Medium", description: "EMI leakage at SATCOM stub due to incomplete shielding.", recommendation: "Apply ferrite suppression and retest EMI compliance." },
+                    { id: "AVX-03", severity: "Medium", description: "Three wire bundles under-secured in avionics bay.", recommendation: "Add AVIC-approved tie-backs or P-clamps." },
+                    { id: "AVX-04", severity: "Medium", description: "Excess heat (~4°C above spec) on central MFD during extended idle.", recommendation: "Evaluate passive cooling or airflow deflection solutions." },
+                    { id: "AVX-05", severity: "Low", description: "Breaker panel label non-compliance with AVIC E-2247.", recommendation: "Replace label to match current standard." }
+                ],
+                compliance: [
+                    { standard: "Display Systems", status: "Partially Compliant", comment: "Ergonomics and brightness align with guidelines; full EMI review pending." },
+                    { standard: "Navigation Systems", status: "Compliant", comment: "IRS and GPS meet TSO and signal stability thresholds." },
+                    { standard: "Communication Systems", status: "Provisionally Compliant", comment: "VHF fully functional; HF and SATCOM interfaces are incomplete." },
+                    { standard: "Surveillance Systems", status: "Compliant", comment: "ADS-B Out active and aligned with Mode S requirements." },
+                    { standard: "Autopilot System", status: "Partially Compliant", comment: "2-axis logic is functional; full compliance pending FMS integration." },
+                    { standard: "Power Distribution", status: "Compliant", comment: "AC/DC buses meet load distribution specs; breaker logic reviewed." },
+                    { standard: "Environmental/EMI", status: "Marginally Compliant", comment: "Shielding mostly present; localized leakage near SATCOM stub noted." }
+                ],
+                recommendations: {
+                    technical: [
+                        "Apply ferrite suppression to SATCOM stub to mitigate EMI.",
+                        "Secure loose harness bundles in the avionics bay.",
+                        "Evaluate passive cooling solutions for the central MFD.",
+                        "Standardize all breaker panel labeling to AVIC E-2247.",
+                        "Install full HF comm system for operational testing."
+                    ],
+                    milestones: [
+                        "Finalize FMS software and link to autopilot for bench simulation.",
+                        "Begin full DO-160G environmental compliance evaluations.",
+                        "Develop and submit DO-178C software assurance roadmap.",
+                        "Complete wiring for flight test data acquisition modules."
+                    ]
+                },
+                faq: [
+                    { question: "What is the primary purpose of this interactive report?", answer: "This report provides a high-level, interactive summary of the May-June 2018 avionics inspection for the CBJ800 'Pegasus' P01 prototype. It is designed for stakeholders to quickly assess compliance, review deficiencies, and understand key findings without needing to parse the full technical document." },
+                    { question: "How is 'Conditional Pass' status determined?", answer: "A 'Conditional Pass' indicates that the core functionality of a system is operational, but full capabilities were not tested or are dependent on other incomplete components. For example, the Autopilot logic is sound, but it cannot be fully validated until integrated with the flight controls." },
+                    { question: "What does 'Marginally Compliant' in the compliance section signify?", answer: "'Marginally Compliant' means the system meets the bare minimum requirements of a standard, but exhibits issues that could lead to non-compliance under different operational conditions. The EMI leakage near the SATCOM stub is an example, which requires mitigation." },
+                    { question: "Are the deficiencies listed here critical to flight safety?", answer: "No. All identified deficiencies are rated either 'Medium' or 'Low' severity. They represent issues that must be addressed for full certification and optimal performance but do not pose an immediate risk to flight safety in a prototype testing environment." },
+                    { question: "Where can I find the original, unabridged technical report?", answer: "The full PDF report is available in the 'Documentation' section of this dashboard. It contains detailed test procedures, raw data, and unabridged engineering notes." }
+                ]
+            };
+
+            // Donut Chart
+            const complianceStatusData = {
+                labels: ['Compliant', 'Partially Compliant', 'Provisionally Compliant', 'Marginally Compliant'],
+                data: [3, 2, 1, 1],
+                colors: ['#22c55e', '#f97316', '#f59e0b', '#ef4444']
+            };
+            const ctx = document.getElementById('complianceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: complianceStatusData.labels,
+                    datasets: [{
+                        data: complianceStatusData.data,
+                        backgroundColor: complianceStatusData.colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 4,
+                        cutout: '75%',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 20, font: { size: 12, family: 'Inter' } } },
+                        tooltip: {
+                            bodyFont: { family: 'Inter' }, titleFont: { family: 'Inter' },
+                            callbacks: {
+                                label: (c) => ` ${c.label}: ${c.raw} Systems`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Generic Accordion Renderer
+            const createAccordion = (containerId, data, contentGenerator) => {
+                const container = document.getElementById(containerId);
+                data.forEach(item => {
+                    const { header, content } = contentGenerator(item);
+                    const div = document.createElement('div');
+                    div.classList.add('bg-white', 'rounded-lg', 'border', 'border-gray-200', 'overflow-hidden');
+                    div.innerHTML = `
+                        <button class="accordion-toggle w-full p-4 text-left flex justify-between items-center hover:bg-gray-50 focus:outline-none">
+                            ${header}
+                            <svg class="accordion-icon w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content hidden p-5 border-t border-gray-200">
+                            ${content}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            };
+            
+            // Systems Accordion
+            createAccordion('systems-accordion', appData.systems, (system) => ({
+                header: `
+                    <div class="flex items-center">
+                        <span class="font-semibold text-base text-gray-800">${system.name}</span>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 rounded-full ${system.status === 'Pass' ? 'status-pass' : 'status-conditional'}">${system.status}</span>
+                `,
+                content: `<p class="text-sm text-gray-600">${system.details}</p>`
+            }));
+
+            // FAQ Accordion
+            createAccordion('faq-accordion', appData.faq, (item) => ({
+                header: `<span class="font-semibold text-base text-gray-800">${item.question}</span>`,
+                content: `<p class="text-sm text-gray-600">${item.answer}</p>`
+            }));
+
+            // Accordion Toggle Logic
+            document.querySelectorAll('.accordion-toggle').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('.accordion-icon');
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+
+            // Deficiencies Table
+            const deficienciesTableBody = document.getElementById('deficiencies-table-body');
+            const renderDeficiencies = (filter = 'all') => {
+                deficienciesTableBody.innerHTML = '';
+                const filteredData = filter === 'all' ? appData.deficiencies : appData.deficiencies.filter(d => d.severity === filter);
+                filteredData.forEach(def => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${def.id}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${def.severity === 'Low' ? 'severity-low' : 'severity-medium'}">${def.severity}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">${def.description}</td>
+                        <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">${def.recommendation}</td>
+                    `;
+                    deficienciesTableBody.appendChild(tr);
+                });
+            };
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('bg-gray-200', 'text-gray-800');
+                        btn.classList.add('bg-white', 'text-gray-600');
+                    });
+                    button.classList.add('bg-gray-200', 'text-gray-800');
+                    button.classList.remove('bg-white', 'text-gray-600');
+                    renderDeficiencies(button.dataset.severity);
+                });
+            });
+            renderDeficiencies();
+
+            // Compliance Grid
+            const complianceGrid = document.getElementById('compliance-grid');
+            const statusIcons = {
+                'Compliant': { icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-green-500' },
+                'Partially Compliant': { icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-orange-500' },
+                'Provisionally Compliant': { icon: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-amber-500' },
+                'Marginally Compliant': { icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: 'text-red-500' }
+            };
+            appData.compliance.forEach(item => {
+                const iconInfo = statusIcons[item.status];
+                const div = document.createElement('div');
+                div.classList.add('bg-white', 'p-5', 'rounded-lg', 'border', 'border-gray-200');
+                div.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0"><svg class="h-6 w-6 ${iconInfo.color}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconInfo.icon}" /></svg></div>
+                        <div class="ml-4">
+                            <h4 class="text-base font-semibold text-gray-900">${item.standard}</h4>
+                            <p class="text-sm font-medium ${iconInfo.color}">${item.status}</p>
+                            <p class="mt-1 text-sm text-gray-600">${item.comment}</p>
+                        </div>
+                    </div>
+                `;
+                complianceGrid.appendChild(div);
+            });
+
+            // Recommendations Lists
+            const techRecList = document.getElementById('tech-recommendations');
+            appData.recommendations.technical.forEach(rec => {
+                const li = document.createElement('li');
+                li.classList.add('flex', 'items-start');
+                li.innerHTML = `<div class="flex-shrink-0 mt-1"><svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div><p class="ml-3 text-sm text-gray-600">${rec}</p>`;
+                techRecList.appendChild(li);
+            });
+            const devMilestonesList = document.getElementById('dev-milestones');
+            appData.recommendations.milestones.forEach(milestone => {
+                const li = document.createElement('li');
+                li.classList.add('flex', 'items-start');
+                li.innerHTML = `<div class="flex-shrink-0 mt-1"><svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg></div><p class="ml-3 text-sm text-gray-600">${milestone}</p>`;
+                devMilestonesList.appendChild(li);
+            });
+
+            // Navigation Logic
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const sidebar = document.getElementById('sidebar');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mainSections = document.querySelectorAll('.main-section');
+            mobileMenuButton.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+            const switchTab = (targetId) => {
+                mainSections.forEach(s => s.classList.toggle('hidden', s.id !== targetId));
+                navLinks.forEach(l => {
+                    l.classList.toggle('active', l.getAttribute('href') === `#${targetId}`);
+                    // Update the text for the dashboard link
+                    if (l.getAttribute('href') === '#dashboard') {
+                        l.textContent = 'Assessment Overview';
+                    }
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('href').substring(1);
+                    switchTab(targetId);
+                    if (window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
+                });
+            });
+            // Initialize with the dashboard view
+            switchTab('dashboard');
+        });
+    </script>
+</body>
+</html>
