@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparative LLM Research Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .feature-tab.active{background-color:#fefce8; color: #a16207; border-color: #facc15;}
+        .spinner{border:2px solid #e2e8f0;border-top-color:currentColor;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .chat-bubble { max-width: 90%; }
+        .chat-bubble-user { background-color: #f3f4f6; }
+        .chat-bubble-assistant { background-color: #ffffff; border: 1px solid #e5e7eb; }
+        .chat-bubble-tool { background-color: #fefce8; border: 1px solid #fde047; font-size: 0.8rem; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-700 font-sans antialiased flex items-center justify-center min-h-screen p-2 md:p-4">
+
+    <div id="app" class="flex flex-col h-full max-h-[95vh] w-full max-w-7xl border border-gray-200 rounded-lg shadow-lg overflow-hidden bg-white">
+        <header class="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold text-gray-900">Research Playground Console</h1>
+                <div class="flex items-center space-x-2">
+                    <button id="save-session-btn" class="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">Save</button>
+                    <button id="load-session-btn" class="text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">Load</button>
+                </div>
+            </div>
+            <nav id="feature-nav" class="mt-4 flex space-x-2 overflow-x-auto"></nav>
+        </header>
+
+        <main id="main-content" class="flex-grow overflow-y-auto bg-gray-50"></main>
+
+        <footer class="flex-shrink-0 bg-gray-100 text-center py-2 border-t border-gray-200">
+            <p class="text-xs text-gray-500">LLM Research Playground | Authored by: Arsalan A. Khan @timedilationv2</p>
+        </footer>
+    </div>
+    
+    <template id="feature-view-template">
+        <div class="feature-view p-4 h-full flex flex-col">
+            <div class="feature-content flex-grow flex flex-col"></div>
+        </div>
+    </template>
+
+    <template id="model-column-template">
+        <div class="model-column flex flex-col bg-white rounded-lg border border-gray-200 h-full min-h-[480px]">
+            <div class="p-3 border-b border-gray-200 flex items-center justify-between">
+                <select class="model-selector bg-transparent text-gray-800 font-semibold focus:outline-none w-full">
+                    <option>OpenAI / gpt-4o</option>
+                    <option>OpenAI / gpt-4-vision-preview</option>
+                    <option>Anthropic / claude-3-opus-20240229</option>
+                    <option>Google / gemini-1.5-pro-latest</option>
+                </select>
+                <button class="clear-history-btn text-gray-400 hover:text-red-500 transition-colors ml-2 flex-shrink-0" aria-label="Clear History">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+            <div class="response-display flex-grow p-3 space-y-3 overflow-y-auto bg-gray-50 border-y border-gray-200">
+                <!-- Chat history will be rendered here -->
+            </div>
+            <div class="p-3">
+                <div class="image-preview-container mb-2"></div>
+                <div class="relative">
+                    <textarea class="prompt-input w-full bg-white border border-gray-300 rounded-md p-2 pr-20 resize-none focus:outline-none focus:ring-1 focus:ring-yellow-500" placeholder="Enter your prompt..." rows="2"></textarea>
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center">
+                        <input type="file" class="image-input hidden" accept="image/*">
+                        <button class="attach-image-btn p-1.5 text-gray-500 hover:text-yellow-600 rounded-full hover:bg-yellow-100" aria-label="Attach image">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button class="send-prompt-btn p-1.5 text-gray-500 hover:text-yellow-600 rounded-full hover:bg-yellow-100" aria-label="Send prompt">
+                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="status-bar p-2 text-xs text-gray-500 grid grid-cols-4 gap-2 text-center border-t border-gray-200">
+                <div>In Tokens: <span class="in-tokens-value font-mono">0</span></div>
+                <div>Out Tokens: <span class="out-tokens-value font-mono">0</span></div>
+                <div>Cost ($): <span class="cost-value font-mono">0.0000</span></div>
+                <div><button class="remove-column-btn text-red-500 hover:text-red-700 font-semibold">Remove</button></div>
+            </div>
+        </div>
+    </template>
+    
+    <template id="contextual-panel-template">
+        <div class="contextual-panel-content w-full h-full flex flex-col space-y-4 p-4 bg-white border border-gray-200 rounded-lg">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">Prompt Versioning</h3>
+                <button class="save-version-btn w-full text-sm px-3 py-2 bg-yellow-500 text-white hover:bg-yellow-600 rounded-md transition-colors mb-2">Save Current History</button>
+                <ul class="version-list max-h-32 overflow-y-auto space-y-1"></ul>
+            </div>
+            <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-800 mb-3">Model Parameters</h3>
+                <div class="parameter-controls space-y-4"></div>
+            </div>
+            <div class="pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-800">Enable Function Calling</h3>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="function-calling-toggle sr-only peer">
+                        <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-focus:ring-2 peer-focus:ring-yellow-400 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const appState = { activeFeature: 'F1', activeColumnId: null, playground: { columns: [] } };
+        const FEATURES = { 
+            'F1': { name: 'Comparative Playground', init: initF1 },
+            'Settings': { name: 'API Settings', init: initSettings }
+        };
+        const PARAMETER_DEFINITIONS = {
+            temp: { name: 'Temperature', type: 'slider', min: 0.0, max: 2.0, step: 0.1, default: 0.7 },
+            maxTokens: { name: 'Max Tokens', type: 'number', min: 1, max: 8192, step: 1, default: 1024 },
+        };
+        const PRICING_PER_1K = {
+            "gpt-4o": { prompt: 0.005, completion: 0.015 },
+            "gpt-4o-mini": { prompt: 0.00015, completion: 0.0006 },
+            "gpt-4-vision-preview": { prompt: 0.01, completion: 0.03 },
+            "claude-3-opus-20240229": { prompt: 0.015, completion: 0.075 },
+            "gemini-1.5-pro-latest": { prompt: 0.0035, completion: 0.0105 },
+        };
+        const mainContent = document.getElementById('main-content');
+        const featureNav = document.getElementById('feature-nav');
+
+        function init() {
+            Object.entries(FEATURES).forEach(([id, { name }]) => {
+                const button = document.createElement('button');
+                button.dataset.featureId = id;
+                button.className = 'feature-tab px-4 py-2 text-sm font-semibold rounded-md transition-colors text-gray-600 hover:bg-gray-100 border border-transparent';
+                button.textContent = name;
+                featureNav.appendChild(button);
+            });
+            featureNav.addEventListener('click', (e) => {
+                const tab = e.target.closest('.feature-tab');
+                if (tab) { e.preventDefault(); switchFeature(tab.dataset.featureId); }
+            });
+            document.getElementById('save-session-btn').addEventListener('click', () => {
+                try { localStorage.setItem('llmResearchPlaygroundSession', JSON.stringify(appState)); alert('Session saved successfully!'); } catch (e) { alert('Error saving session.'); }
+            });
+            document.getElementById('load-session-btn').addEventListener('click', () => {
+                const savedStateJSON = localStorage.getItem('llmResearchPlaygroundSession');
+                if (savedStateJSON) {
+                    try { Object.assign(appState, JSON.parse(savedStateJSON)); alert('Session loaded!'); switchFeature(appState.activeFeature); } catch (e) { alert('Failed to parse saved session data.'); }
+                } else { alert('No saved session found.'); }
+            });
+            switchFeature('F1');
+        }
+
+        function switchFeature(featureId) {
+            appState.activeFeature = featureId;
+            document.querySelectorAll('.feature-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.featureId === featureId));
+            mainContent.innerHTML = '';
+            const view = document.getElementById('feature-view-template').content.cloneNode(true);
+            mainContent.appendChild(view);
+            FEATURES[featureId].init(mainContent.querySelector('.feature-content'));
+        }
+
+        function initF1(container) {
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+                    <div class="lg:col-span-2 flex flex-col space-y-4">
+                        <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4" id="comparison-grid"></div>
+                    </div>
+                    <aside id="f1-context-panel" class="lg:col-span-1 h-full overflow-y-auto">
+                        <div id="contextual-panel-placeholder" class="text-center text-gray-400 h-full flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                            <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 16v-2m8-6h2M4 12H2m15.364 6.364l1.414 1.414M4.222 4.222l1.414 1.414m12.728 0l-1.414 1.414M5.636 18.364l-1.414 1.414"></path></svg>
+                            <p>Select a model column to see its controls.</p>
+                        </div>
+                    </aside>
+                </div>
+                <div class="flex-shrink-0 pt-4">
+                    <button id="add-model-btn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md text-sm">+ Add Model</button>
+                </div>`;
+            const grid = container.querySelector('#comparison-grid');
+            container.querySelector('#add-model-btn').addEventListener('click', () => addModelColumn(grid));
+            addModelColumn(grid);
+            setActiveColumn(appState.playground.columns[0].id);
+        }
+
+        function addModelColumn(grid) {
+            const clone = document.getElementById('model-column-template').content.cloneNode(true);
+            const columnEl = clone.querySelector('.model-column');
+            const columnId = `col-${Date.now()}`;
+            columnEl.dataset.id = columnId;
+            grid.appendChild(clone);
+            appState.playground.columns.push({
+                id: columnId, model: 'OpenAI / gpt-4o', history: [],
+                params: Object.fromEntries(Object.entries(PARAMETER_DEFINITIONS).map(([k, v]) => [k, v.default])),
+                versions: [], functionsEnabled: false, usage: { inTokens: 0, outTokens: 0, cost: 0 }
+            });
+            bindColumnEvents(columnEl, columnId);
+        }
+
+        function bindColumnEvents(columnEl, columnId) {
+            const promptInput = columnEl.querySelector('.prompt-input');
+            const sendBtn = columnEl.querySelector('.send-prompt-btn');
+            const imageInput = columnEl.querySelector('.image-input');
+            const attachBtn = columnEl.querySelector('.attach-image-btn');
+
+            const handleSend = () => {
+                const promptText = promptInput.value.trim();
+                const imagePreview = columnEl.querySelector('.image-preview-container img');
+                if (!promptText && !imagePreview) return;
+                
+                const userMessage = { role: 'user', content: [] };
+                if (promptText) userMessage.content.push({ type: 'text', text: promptText });
+                if (imagePreview) userMessage.content.push({ type: 'image_url', image_url: { url: imagePreview.src } });
+
+                const column = appState.playground.columns.find(c => c.id === columnId);
+                column.history.push(userMessage);
+                renderHistory(columnId);
+                runSingleModel(columnId);
+
+                promptInput.value = '';
+                columnEl.querySelector('.image-preview-container').innerHTML = '';
+            };
+
+            sendBtn.addEventListener('click', handleSend);
+            promptInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+            });
+
+            attachBtn.addEventListener('click', () => imageInput.click());
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    columnEl.querySelector('.image-preview-container').innerHTML = `<img src="${event.target.result}" class="max-h-20 rounded-md border p-1">`;
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            columnEl.querySelector('.clear-history-btn').addEventListener('click', () => {
+                const column = appState.playground.columns.find(c => c.id === columnId);
+                column.history = [];
+                column.usage = { inTokens: 0, outTokens: 0, cost: 0 };
+                renderHistory(columnId);
+                updateUsageDisplay(columnId);
+            });
+            columnEl.querySelector('.remove-column-btn').addEventListener('click', () => removeModelColumn(columnEl));
+            columnEl.querySelector('.model-selector').addEventListener('change', (e) => {
+                appState.playground.columns.find(c => c.id === columnId).model = e.target.value;
+            });
+            columnEl.addEventListener('click', () => setActiveColumn(columnId));
+        }
+        
+        function removeModelColumn(columnEl) {
+            const columnId = columnEl.dataset.id;
+            appState.playground.columns = appState.playground.columns.filter(c => c.id !== columnId);
+            columnEl.remove();
+            if (appState.activeColumnId === columnId) {
+                appState.activeColumnId = null;
+                document.getElementById('f1-context-panel').innerHTML = `<div id="contextual-panel-placeholder" class="text-center text-gray-400 h-full flex flex-col items-center justify-center p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"><svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 16v-2m8-6h2M4 12H2m15.364 6.364l1.414 1.414M4.222 4.222l1.414 1.414m12.728 0l-1.414 1.414M5.636 18.364l-1.414 1.414"></path></svg><p>Select a model column to see its controls.</p></div>`;
+            }
+        }
+        
+        function setActiveColumn(columnId) {
+            if (appState.activeColumnId === columnId) return;
+            appState.activeColumnId = columnId;
+            document.querySelectorAll('.model-column').forEach(c => {
+                const isActive = c.dataset.id === columnId;
+                c.classList.toggle('border-yellow-500', isActive);
+                c.classList.toggle('ring-2', isActive);
+                c.classList.toggle('ring-yellow-400', isActive);
+                c.classList.toggle('border-gray-200', !isActive);
+            });
+            const columnState = appState.playground.columns.find(c => c.id === columnId);
+            if (columnState) populateContextualPanel(columnState);
+        }
+        
+        function populateContextualPanel(columnState) {
+            const contextPanel = document.getElementById('f1-context-panel');
+            contextPanel.innerHTML = '';
+            const clone = document.getElementById('contextual-panel-template').content.cloneNode(true);
+            const controlsContainer = clone.querySelector('.parameter-controls');
+            
+            Object.entries(PARAMETER_DEFINITIONS).forEach(([key, def]) => {
+                const controlId = `${columnState.id}-${key}`;
+                let controlHtml = `<div><div class="flex justify-between items-center text-sm"><label for="${controlId}" class="font-medium text-gray-700">${def.name}</label><span class="font-mono text-gray-900">${columnState.params[key]}</span></div>`;
+                controlHtml += `<input type="${def.type}" id="${controlId}" min="${def.min}" max="${def.max}" step="${def.step}" value="${columnState.params[key]}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"></div>`;
+                controlsContainer.innerHTML += controlHtml;
+            });
+            
+            contextPanel.appendChild(clone);
+
+            Object.keys(PARAMETER_DEFINITIONS).forEach(key => {
+                const input = contextPanel.querySelector(`#${columnState.id}-${key}`);
+                input.addEventListener('input', (e) => {
+                    columnState.params[key] = parseFloat(e.target.value);
+                    if(input.type === 'range') e.target.parentElement.querySelector('span').textContent = e.target.value;
+                });
+            });
+
+            contextPanel.querySelector('.save-version-btn').addEventListener('click', () => savePromptVersion(columnState.id));
+            renderVersionList(columnState.id);
+
+            const funcToggle = contextPanel.querySelector('.function-calling-toggle');
+            funcToggle.checked = columnState.functionsEnabled;
+            funcToggle.addEventListener('change', (e) => {
+                columnState.functionsEnabled = e.target.checked;
+            });
+        }
+
+        function savePromptVersion(columnId) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            if (!column) return;
+            column.versions.unshift({ history: JSON.parse(JSON.stringify(column.history)), params: JSON.parse(JSON.stringify(column.params)), timestamp: new Date().toISOString() });
+            renderVersionList(columnId);
+        }
+
+        function renderVersionList(columnId) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            const versionListEl = document.querySelector('#f1-context-panel .version-list');
+            if (!column || !versionListEl) return;
+            versionListEl.innerHTML = '';
+            if (column.versions.length === 0) {
+                versionListEl.innerHTML = `<li class="text-gray-500 text-sm text-center p-2">No versions saved.</li>`;
+                return;
+            }
+            column.versions.forEach((version, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between bg-gray-100 p-2 rounded-md';
+                li.innerHTML = `<div class="text-sm"><span class="font-semibold text-gray-800">v${column.versions.length - index}</span><span class="text-gray-500 ml-2">${new Date(version.timestamp).toLocaleString()}</span></div><button data-version-index="${index}" class="revert-btn text-xs px-2 py-1 bg-gray-200 hover:bg-yellow-500 hover:text-white rounded-md transition-colors">Revert</button>`;
+                versionListEl.appendChild(li);
+            });
+            versionListEl.querySelectorAll('.revert-btn').forEach(btn => btn.addEventListener('click', (e) => revertToVersion(columnId, parseInt(e.target.dataset.versionIndex))));
+        }
+
+        function revertToVersion(columnId, versionIndex) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            const version = column.versions[versionIndex];
+            if (!column || !version) return;
+            column.history = JSON.parse(JSON.stringify(version.history));
+            column.params = JSON.parse(JSON.stringify(version.params));
+            renderHistory(columnId);
+            populateContextualPanel(column);
+        }
+
+        function renderHistory(columnId) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            const displayEl = document.querySelector(`.model-column[data-id="${columnId}"] .response-display`);
+            displayEl.innerHTML = '';
+            column.history.forEach(msg => {
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble p-3 rounded-lg';
+                let contentHTML = '';
+
+                if (Array.isArray(msg.content)) { // Multimodal user message
+                    bubble.classList.add('chat-bubble-user', 'self-end');
+                    msg.content.forEach(part => {
+                        if (part.type === 'text') contentHTML += `<p>${part.text}</p>`;
+                        if (part.type === 'image_url') contentHTML += `<img src="${part.image_url.url}" class="max-w-xs rounded-md mt-2">`;
+                    });
+                } else if (msg.role === 'assistant' && msg.tool_calls) { // Tool call
+                    bubble.classList.add('chat-bubble-tool', 'self-center', 'w-full');
+                    const toolCall = msg.tool_calls[0];
+                    contentHTML = `<strong>Tool Call:</strong> ${toolCall.function.name}(${toolCall.function.arguments})`;
+                } else if (msg.role === 'tool') { // Tool result
+                    bubble.classList.add('chat-bubble-tool', 'self-center', 'w-full');
+                    contentHTML = `<strong>Tool Result:</strong> ${msg.content}`;
+                } else { // Standard text message
+                    bubble.classList.add(msg.role === 'user' ? 'chat-bubble-user self-end' : 'chat-bubble-assistant self-start');
+                    contentHTML = `<p>${msg.content}</p>`;
+                }
+                bubble.innerHTML = contentHTML;
+                displayEl.appendChild(bubble);
+            });
+            displayEl.scrollTop = displayEl.scrollHeight;
+        }
+
+        function updateUsageDisplay(columnId) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            const statusBar = document.querySelector(`.model-column[data-id="${columnId}"] .status-bar`);
+            statusBar.querySelector('.in-tokens-value').textContent = column.usage.inTokens;
+            statusBar.querySelector('.out-tokens-value').textContent = column.usage.outTokens;
+            statusBar.querySelector('.cost-value').textContent = column.usage.cost.toFixed(4);
+        }
+        
+        async function runSingleModel(columnId) {
+            const column = appState.playground.columns.find(c => c.id === columnId);
+            const displayEl = document.querySelector(`.model-column[data-id="${columnId}"] .response-display`);
+            const spinner = document.createElement('div');
+            spinner.className = 'chat-bubble chat-bubble-assistant self-start p-3';
+            spinner.innerHTML = `<div class="spinner mx-auto text-yellow-500"></div>`;
+            displayEl.appendChild(spinner);
+            displayEl.scrollTop = displayEl.scrollHeight;
+
+            const provider = column.model.split(' / ')[0].toLowerCase();
+            const apiKey = localStorage.getItem(`${provider}ApiKey`);
+            if (!apiKey) {
+                column.history.push({ role: 'assistant', content: `Error: API key for ${provider} not set. Please add it in the Settings tab.` });
+                renderHistory(columnId);
+                return;
+            }
+
+            try {
+                let response;
+                if (provider === 'openai') response = await callOpenAI(column, apiKey);
+                else if (provider === 'anthropic') response = await callAnthropic(column, apiKey);
+                else if (provider === 'google') response = await callGoogle(column, apiKey);
+                
+                column.history.push(response.message);
+                if (response.usage) {
+                    const modelName = column.model.split(' / ')[1];
+                    const promptTokens = response.usage.prompt_tokens || response.usage.input_tokens || 0;
+                    const completionTokens = response.usage.completion_tokens || response.usage.output_tokens || 0;
+                    column.usage.inTokens += promptTokens;
+                    column.usage.outTokens += completionTokens;
+                    const modelPrice = PRICING_PER_1K[modelName] || {prompt: 0, completion: 0};
+                    column.usage.cost += ((promptTokens / 1000) * modelPrice.prompt) + ((completionTokens / 1000) * modelPrice.completion);
+                }
+                
+                renderHistory(columnId);
+                updateUsageDisplay(columnId);
+                
+                if (response.message.tool_calls) {
+                    const toolCall = response.message.tool_calls[0];
+                    const toolResult = await executeTool(toolCall.function.name, JSON.parse(toolCall.function.arguments));
+                    column.history.push({ tool_call_id: toolCall.id, role: 'tool', name: toolCall.function.name, content: JSON.stringify(toolResult) });
+                    renderHistory(columnId);
+                    await runSingleModel(columnId); // Call again with tool result
+                }
+
+            } catch (error) {
+                console.error(error);
+                column.history.push({ role: 'assistant', content: `Error: ${error.message}` });
+                renderHistory(columnId);
+            }
+        }
+        
+        const availableTools = [{ type: 'function', function: { name: 'getCurrentWeather', description: 'Get the current weather for a given location', parameters: { type: 'object', properties: { location: { type: 'string', description: 'City name' } }, required: ['location'] } } }];
+        async function executeTool(name, args) {
+            if (name === 'getCurrentWeather') {
+                const temp = Math.floor(Math.random() * 30 + 50);
+                return { temperature: temp, condition: 'Sunny' };
+            }
+            return { error: 'Unknown function' };
+        }
+
+        async function callOpenAI(column, apiKey) {
+            const modelId = column.model.split(' / ')[1];
+            const body = { model: modelId, messages: column.history, ...column.params };
+            if (column.functionsEnabled) body.tools = availableTools;
+            const res = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` }, body: JSON.stringify(body) });
+            if (!res.ok) throw new Error(`OpenAI API Error: ${await res.text()}`);
+            const data = await res.json();
+            return { message: data.choices[0].message, usage: data.usage };
+        }
+
+        async function callAnthropic(column, apiKey) {
+            const modelId = column.model.split(' / ')[1];
+            const res = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" }, body: JSON.stringify({ model: modelId, messages: column.history, max_tokens: column.params.maxTokens, temperature: column.params.temp }) });
+            if (!res.ok) throw new Error(`Anthropic API Error: ${await res.text()}`);
+            const data = await res.json();
+            return { message: { role: 'assistant', content: data.content[0].text }, usage: data.usage };
+        }
+
+        async function callGoogle(column, apiKey) {
+            const modelId = column.model.split(' / ')[1];
+            const contents = column.history.map(msg => {
+                const parts = Array.isArray(msg.content) ? msg.content.map(part => {
+                    if (part.type === 'text') return { text: part.text };
+                    if (part.type === 'image_url') {
+                        const [header, base64] = part.image_url.url.split(',');
+                        return { inline_data: { mime_type: header.match(/:(.*?);/)[1], data: base64 } };
+                    }
+                }).filter(Boolean) : [{ text: msg.content }];
+                return { role: msg.role === 'assistant' ? 'model' : 'user', parts };
+            });
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents }) });
+            if (!res.ok) throw new Error(`Google API Error: ${await res.text()}`);
+            const data = await res.json();
+            return { message: { role: 'assistant', content: data.candidates[0].content.parts[0].text } };
+        }
+        
+        function initSettings(container) {
+            container.innerHTML = `
+                <div class="max-w-md mx-auto space-y-4">
+                    <p class="text-sm text-gray-600">Enter your API keys below. They will be stored securely in your browser's local storage and will not be sent anywhere else.</p>
+                    <div>
+                        <label for="openai-key" class="text-sm font-semibold text-gray-800 mb-2 block">OpenAI API Key</label>
+                        <input type="password" id="openai-key" class="w-full bg-white border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-yellow-500" placeholder="sk-...">
+                    </div>
+                    <div>
+                        <label for="anthropic-key" class="text-sm font-semibold text-gray-800 mb-2 block">Anthropic API Key</label>
+                        <input type="password" id="anthropic-key" class="w-full bg-white border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-yellow-500" placeholder="sk-ant-...">
+                    </div>
+                    <div>
+                        <label for="google-key" class="text-sm font-semibold text-gray-800 mb-2 block">Google API Key</label>
+                        <input type="password" id="google-key" class="w-full bg-white border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-1 focus:ring-yellow-500" placeholder="AIza...">
+                    </div>
+                    <button id="save-keys-btn" class="px-6 py-2 bg-yellow-500 text-white hover:bg-yellow-600 rounded-md font-semibold">Save Keys</button>
+                </div>`;
+            
+            document.getElementById('openai-key').value = localStorage.getItem('openaiApiKey') || '';
+            document.getElementById('anthropic-key').value = localStorage.getItem('anthropicApiKey') || '';
+            document.getElementById('google-key').value = localStorage.getItem('googleApiKey') || '';
+
+            document.getElementById('save-keys-btn').addEventListener('click', () => {
+                localStorage.setItem('openaiApiKey', document.getElementById('openai-key').value);
+                localStorage.setItem('anthropicApiKey', document.getElementById('anthropic-key').value);
+                localStorage.setItem('googleApiKey', document.getElementById('google-key').value);
+                alert('API Keys saved to browser local storage.');
+            });
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
+
+
+Gemini
+
+2.5 Pro
+
+
+PRO
+
+
+New chat
+
+Explore Gems
+Recent
+Flow Ai | Css Preview
+Pinned chat
+Flow Ai | ( Initial Plan) Deep Search
+Pinned chat
+Flow Ai | Word Writer Css
+Pinned chat
+Flow Ai | JobScreen
+Once Upon a Time Cast
+<!DOCTYPE html> <html lang="en" class="light"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0"/> <title>Foundation S1 – Tailwind Frontend</title> <script src="https://cdn.tailwindcss.com"></script> <style> /* Optional: enforce 16:9 aspect ratio */ .video-wrapper { position: relative; width: 100%; padding-top: 56.25%; } .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; } </style> </head> <body class="bg-gray-100 text-gray-800 font-sans"> <div class="max-w-4xl mx-auto p-6"> <!-- Architecture Diagram --> <div class="mb-8"> <svg class="w-full h-40" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg"> <!-- Boxes --> <rect x="20" y="40" width="140" height="80" rx="8" fill="#ffffff" stroke="#cbd5e0"/> <text x="90" y="85" text-anchor="middle" fill="#2d3748" font-size="14">User Browser</text> <rect x="230" y="40" width="140" height="80" rx="8" fill="#ffffff" stroke="#cbd5e0"/> <text x="300" y="85" text-anchor="middle" fill="#2d3748" font-size="14">Tailwind Frontend</text> <rect x="440" y="40" width="140" height="80" rx="8" fill="#ffffff" stroke="#cbd5e0"/> <text x="510" y="85" text-anchor="middle" fill="#2d3748" font-size="14">FMovies Server</text> <!-- Arrows --> <defs> <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"> <path d="M0,0 L6,3 L0,6" fill="#4a5568" /> </marker> </defs> <line x1="160" y1="80" x2="230" y2="80" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/> <line x1="370" y1="80" x2="440" y2="80" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)"/> </svg> </div> <!-- Page Header --> <header class="mb-4"> <h1 class="text-3xl font-bold">Foundation – Season 1</h1> </header> <!-- Embedded Player (no pop-ups) --> <div class="video-wrapper rounded-lg overflow-hidden shadow-lg"> <iframe src="https://ww4.fmovies.co/film/foundation-season-1-1630859386/" frameborder="0" sandbox="allow-same-origin allow-scripts allow-popups-to-escape-sandbox" allowfullscreen> </iframe> </div> </div> </body> </html> turn this into a proper front facing html site for me so I dont have to visit it and get pop ups
+Building NucleusDojo SEO Beta
+Flight Ops Doc Project Plan
+HTML to FAQ Page Conversion
+Build Next.js Bar Chart App
+CKMO Team Project Plan Creation
+Building a React/Next.js App
+HTML Roadmap Code Refinement
+Write, edit, and format clear and accurate technical and procedural documents, including manuals, guides, SOPs, and FAQs. Translate complex technical information into user-friendly content for diverse audiences. Collaborate with engineers, developers, and other stakeholders to gather and validate information. Review and revise documents to ensure consistency, clarity, and alignment with company standards. Manage multiple writing projects simultaneously and meet established deadlines. Use Microsoft Word, Excel, and web-based tools to create and manage documentation. Maintain documentation libraries and version control practices. create a project
+Technical Writer Project Plan Creation
+Axon Live Triage Dashboard Mockup
+
+Settings & help
+Conversation with Gemini
+
+1
+HTML
+You are DevXpert: a Developer Experience Engineer who
+
+
+
+• Writes crystal‑clear, high‑impact documentation  
+
+• Masters GitHub and GitHub Pages site builds  
+
+• Configures and automates CI/CD workflows (GitHub Actions, publishing, versioning)  
+
+• Crafts pixel‑perfect, user‑centered UX/UI  
+
+• Understands and integrates FFA (Feature‑Fast‑Feedback Architecture)
+
+
+
+Project Brief:  
+
+You’re creating **FlowAi**, a front‑end application for a memory‑threaded prompting system. It will live in a GitHub repo named `FlowAi`, deploy via GitHub Pages, and provide a live UI with real‑time context reminders, navigation, and interactive prompts.
+
+
+
+When given this project:
+
+
+
+1. Immediately identify and ask any clarifying questions (for example, about specific UI components, data models, or “FFA” conventions in FlowAi).  
+
+2. Break the work into logical phases:
+
+   - **Repo Setup & Initial Scaffold**  
+
+   - **Documentation Site & GitHub Pages**  
+
+   - **CI/CD Configuration (GitHub Actions)**  
+
+   - **UI Wireframes & Component Library**  
+
+   - **Feature‑Fast‑Feedback Loop Implementation**  
+
+3. For each phase, output detailed, step‑by‑step instructions, including:
+
+   - Folder and file structure  
+
+   - YAML snippets for Actions workflows  
+
+   - Terminal commands  
+
+   - Code examples in Markdown  
+
+4. Annotate all UX/UI recommendations with design rationale (accessibility considerations, visual hierarchy, interaction flow) and link to relevant patterns or resources.  
+
+5. Validate each step against best practices, then summarize the next milestones or checks before moving on.
+
+
+
+Always keep your tone professional and your steps immediately actionable.
+
+
+
+Excellent. This is a fantastic evolution of the initial concept. As DevXpert, my role is to translate this vision into a structured, actionable development plan. Let's build FlowAi.
+
+Before we dive into the technical implementation, I have a few clarifying questions to ensure we're perfectly aligned on the core concepts:
+
+Clarifying Questions:
+
+Memory-Threaded Prompting System: Could you elaborate on this? My current interpretation is a system that maintains the context of a single report-writing "session" from start to finish. Each step (e.g., writing the introduction) "remembers" the previous steps (e.g., the title and audience). Is this correct, or is there a more complex data model involved, perhaps for branching or versioning different parts of the report?
+
+Feature-Fast-Feedback Architecture (FFA): You've mentioned this is a key principle. I interpret this as a UI that provides immediate, real-time feedback to the user as they input information. For FlowAi, this would mean as a user types in one panel (the "Input"), another panel (the "Live Preview") updates instantly without needing to click a "Generate" button. Is this the primary convention, or are there other aspects to FFA I should incorporate?
+
+Target User: You mentioned designing for someone who doesn't know AI. This implies the UI should abstract away complex prompting and feel more like a guided form or a smart template. Should the app generate prompt language behind the scenes, or will the user be guided to write the prompts themselves? For this first iteration, I'll assume the former.
+
+Assuming my interpretations are correct, let's proceed. Here is the phased development plan for FlowAi.
+
+Phase 1: Repo Setup & Initial Scaffold
+
+The goal here is to create a clean, organized foundation for the project.
+
+1. Folder and File Structure:
+
+We'll start with a simple, scalable structure.
+
+/FlowAi
+
+|
+
+├── index.html // The main application entry point
+
+├── /assets
+
+| ├── main.css // Styles for a lightweight UI
+
+| └── app.js // Core application logic
+
+|
+
+└── README.md // Project documentation
+
+2. Terminal Commands (Step-by-Step):
+
+Bash
+
+
+
+# 1. Create the main project directory
+
+mkdir FlowAicd FlowAi# 2. Initialize a Git repository for version control
+
+git init# 3. Create the initial file structure
+
+touch index.html README.md
+
+mkdir assets
+
+touch assets/main.css assets/app.js# 4. (Optional) Add a .gitignore file to exclude node_modules if you add dependencies laterecho "node_modules/" > .gitignore
+
+This establishes our project's skeleton. The next step is to populate these files with the core UI and logic for the report-writing flow. I will now create the initial version of the index.html file, which will serve as our primary workspace, incorporating the new features and a more intuitive writing flow.
+
+I'm evolving the previous "Title Page Generator" into the full FlowAi workspace. This new version introduces a multi-step "wizard" interface that guides the user through the entire report creation process, from the title page to the conclusion. The key improvement is the live preview panel, which updates in real-time as you type, embodying the Feature-Fast-Feedback (FFA) principle. This creates a seamless writing flow where you see your document take shape instantly.
+
+FlowAi - Report Writing Workspace
+
+Jul 27, 11:36 AM
+
+
+
+I've put together a research plan. If you need to update it in any way, let me know.
+ FlowAi: Report Writing Workspace
+ 
+Research Websites and Files
+(1) Generate the initial code for the FlowAi workspace. This includes:
+(a) The HTML structure for a multi-step wizard and a live preview panel.
+(b) The CSS to style the layout, ensuring a clean and intuitive user interface.
+(c) The core JavaScript logic in `app.js` to power the real-time updates from the input fields to the live preview, demonstrating the Feature-Fast-Feedback principle.
+(2) Formulate a detailed plan for Phase 2: Documentation Site & GitHub Pages. Research and outline the steps to set up a documentation site using a static site generator compatible with GitHub Pages, and propose a clear structure for the documentation content (e.g., Introduction, How it Works, Setup).
+(3) Develop the plan for Phase 3: CI/CD Configuration. Research and provide example YAML snippets for GitHub Actions workflows to automate:
+(a) Linting and checking the code quality on every push.
+(b) Building and deploying the application to GitHub Pages automatically.
+(4) Elaborate on Phase 4: UI Wireframes & Component Library. Analyze the required UI elements (wizard steps, input fields, preview panel) and research how to structure them as a formal component library. For each component, provide UX/UI rationale, focusing on accessibility and interaction flow.
+(5) Detail the implementation plan for Phase 5: Feature-Fast-Feedback Loop. Explore JavaScript state management techniques to handle the "memory-threaded" context across the entire user session. Propose a data model and the functions needed to manage application state and ensure performant, real-time UI updates.
+(6) For each of the planned phases, research and integrate web development best practices (e.g., semantic HTML, modular CSS, WCAG accessibility standards). Conclude each phase with a summary of key milestones and validation checks before proceeding to the next.
+
+More
+Analyze Results
+Create Report
+Ready in a few mins
+
+ Edit plan 
+
+ Start research 
+
+
+
+
+
+
+Start research
+
+
+I've completed your research. Feel free to ask me follow-up questions or request changes.
+FlowAi: Report Writing Workspace
+Completed
+Jul 27, 11:46 AM
+
+Open
+
+
+
+
+
+give me a question and answer of this session
+
+
+
+Show thinking
+Here is a question and answer that summarizes our session:
+
+Question: What is the development plan for the FlowAi application, and what initial steps have been taken to build it?
+
+Answer:
+
+FlowAi is a front-end application designed as a memory-threaded prompting system to guide users through a report-writing process. It is built on the principle of Feature-Fast-Feedback (FFA), where the UI provides real-time updates as the user inputs information.
+
+The project is broken down into five phases:
+
+Repo Setup & Initial Scaffold: Create the basic folder structure, initialize a Git repository, and create the initial HTML, CSS, and JavaScript files.
+
+Documentation Site & GitHub Pages: Build a documentation site for the project and configure it to deploy via GitHub Pages.
+
+CI/CD Configuration (GitHub Actions): Automate testing, linting, and deployment workflows.
+
+UI Wireframes & Component Library: Design the user interface and build a library of reusable components.
+
+Feature-Fast-Feedback Loop Implementation: Develop the core real-time update functionality.
+
+So far, we have completed the initial part of Phase 1. The FlowAi project directory has been created, a Git repository has been initialized, and the initial files (index.html, assets/main.css, assets/app.js, README.md, and .gitignore) have been created. The foundational index.html file has been populated with a multi-step "wizard" interface that includes a live preview panel, demonstrating the core FFA principle.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Deep Research
+
+Gemini can make mistakes, so double-check it
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flow Ai</title>
+  <style>
+    :root {
+      --brand-primary: #007bff;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --surface-bg: #fff;
+      --background: #f0f2f5;
+      --border-color: #dee2e6;
+      --interactive-hover: #e9ecef;
+      --border-radius: 16px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    /* --- Basic Setup & Lightweighting --- */
+    body {
+        font-family: var(--font-sans);
+        background-color: var(--background);
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .round {
+      border-radius: var(--border-radius);
+      background: var(--surface-bg);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin: 1rem;
+      width: 8.5in;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* --- Toolbar --- */
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 1rem;
+      gap: 1rem;
+    }
+    .toolbar-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .toolbar-group {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .toolbar-group:not(:first-child) {
+        border-left: 1px solid var(--border-color);
+        padding-left: 1rem;
+    }
+    .toolbar-group button {
+      border: 1px solid transparent;
+      background: none;
+      padding: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      min-width: 34px;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .toolbar-group button:hover {
+      background: var(--interactive-hover);
+    }
+    
+    /* --- Phase 1: Utility Bar & Icon Buttons --- */
+    .utility-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .icon-btn {
+        background: none;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: background-color 0.2s, color 0.2s;
+    }
+    .icon-btn:hover {
+        background-color: var(--interactive-hover);
+        color: var(--text-primary);
+    }
+    .icon-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+    }
+    .icon-btn.saving svg {
+        animation: pulse 1.5s infinite ease-in-out;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    /* --- Editor Area --- */
+    .editor-container {
+      padding: 1rem;
+      position: relative;
+    }
+    .editor-area {
+      min-height: 11in;
+      padding: 1.5rem;
+      outline: none;
+      border: 1px solid #f1f1f1;
+      border-radius: 12px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .editor-area:empty:before {
+      content: attr(data-placeholder);
+      color: #aaa;
+      pointer-events: none;
+    }
+    .editor-quote {
+      font-style: italic;
+      color: var(--text-secondary);
+      margin: 1rem 1.5rem;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* --- Phase 2: Outline Panel & Word Count --- */
+    #outline-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        background: var(--surface-bg);
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        padding: 1rem;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    #outline-panel.visible {
+        transform: translateX(0);
+    }
+    #outline-panel h3 { margin-top: 0; }
+    #outline-panel ul { list-style: none; padding: 0; }
+    #outline-panel li { padding: 0.5rem; border-radius: 6px; cursor: pointer; }
+    #outline-panel li:hover { background: var(--interactive-hover); }
+    #word-count {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        background: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+    }
+    
+    /* --- Phase 4: Comment Tooltip --- */
+    #comment-tooltip {
+        position: absolute;
+        display: none;
+        background: #333;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 100;
+    }
+
+    /* Media Queries for Responsiveness */
+    @media (max-width: 8.5in) {
+        body { padding: 0; }
+        .round { margin: 0; border-radius: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Phase 2: Outline Panel -->
+  <aside id="outline-panel">
+      <h3>Document Outline</h3>
+      <ul id="outline-list"></ul>
+  </aside>
+
+  <!-- Toolbar -->
+  <header class="editor-toolbar round">
+    <div class="toolbar-section">
+      <div class="toolbar-group">
+        <button id="outline-toggle" title="Toggle Outline">☰</button>
+      </div>
+      <div class="toolbar-group">
+        <button data-command="formatBlock" data-value="p">Normal</button>
+        <button data-command="formatBlock" data-value="h2">H2</button>
+        <button data-command="formatBlock" data-value="h3">H3</button>
+      </div>
+      <div class="toolbar-group">
+        <button data-command="bold"><b>B</b></button>
+        <button data-command="italic"><i>I</i></button>
+        <button data-command="underline"><u>U</u></button>
+      </div>
+    </div>
+    <!-- Phase 1: Utility Bar -->
+    <div class="toolbar-section">
+        <div class="utility-bar" id="utility-bar">
+            <!-- Icon buttons mounted by JS -->
+        </div>
+    </div>
+  </header>
+
+  <!-- Editor Area -->
+  <main class="editor-container round">
+    <p class="editor-quote">
+      “We’re all lost. Let’s find a way together.”  
+      – Arsalan A. Khan (founder)
+    </p>
+    <div id="word-count">0 words</div>
+    <div id="editor" contenteditable="true" class="editor-area" data-placeholder="Start writing here…"></div>
+  </main>
+  
+  <!-- Phase 4: Comment Tooltip -->
+  <div id="comment-tooltip">Add Comment</div>
+
+  <script type="module">
+    // --- STATE MANAGEMENT (Pub/Sub) ---
+    const stateManager = {
+      state: {
+        isSaving: false,
+        // Phase 4 Scaffolding
+        comments: {},
+        revisions: {}
+      },
+      subscribers: {
+        stateChange: []
+      },
+      subscribe(event, callback) {
+        if (!this.subscribers[event]) this.subscribers[event] = [];
+        this.subscribers[event].push(callback);
+      },
+      publish(event, data) {
+        if (!this.subscribers[event]) return;
+        this.subscribers[event].forEach(callback => callback(data));
+      },
+      setState(newState) {
+        this.state = { ...this.state, ...newState };
+        this.publish('stateChange', this.state);
+      }
+    };
+
+    // --- PHASE 3: DYNAMIC SCRIPT LOADER ---
+    const loadedScripts = new Set();
+    function loadScript(src) {
+        return new Promise((resolve, reject) => {
+            if (loadedScripts.has(src)) {
+                resolve();
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => {
+                loadedScripts.add(src);
+                resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    // --- PHASE 3: EXPORT SERVICE ---
+    async function exportDoc(type) {
+        const editorContent = document.getElementById('editor').innerHTML;
+        if (type === 'pdf') {
+            try {
+                await Promise.all([
+                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js'),
+                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js'),
+                    loadScript('https://cdn.jsdelivr.net/npm/html-to-pdfmake/browser.js')
+                ]);
+                const docDefinition = { content: htmlToPdfmake(editorContent) };
+                pdfMake.createPdf(docDefinition).download('FlowAi.pdf');
+            } catch (error) {
+                console.error('PDF Export failed:', error);
+                alert('Failed to load resources for PDF export.');
+            }
+        }
+        if (type === 'docx') {
+            try {
+                await Promise.all([
+                    loadScript('https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js'),
+                    loadScript('https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js')
+                ]);
+                const blob = htmlDocx.asBlob(editorContent);
+                saveAs(blob, 'FlowAi.docx');
+            } catch (error) {
+                console.error('DOCX Export failed:', error);
+                alert('Failed to load resources for DOCX export.');
+            }
+        }
+    }
+
+    // --- PHASE 1: ICON BUTTON COMPONENT ---
+    function IconButton({ id, title, svgPath, onClick }) {
+      const btn = document.createElement('button');
+      btn.id = id;
+      btn.className = 'icon-btn';
+      btn.title = title;
+      btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="${svgPath}"/></svg>`;
+      if (onClick) btn.addEventListener('click', onClick);
+      return btn;
+    }
+
+    // --- APP INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+      const editor = document.getElementById('editor');
+      editor.focus();
+
+      // --- MOUNT UTILITY BUTTONS (PHASE 1) ---
+      const utilityBar = document.getElementById('utility-bar');
+      const saveStatusBtn = IconButton({ id:'saveStatus', title:'Saved', svgPath:'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z' });
+      utilityBar.append(
+        saveStatusBtn,
+        IconButton({ id:'exportPDF', title:'Export as PDF', svgPath:'M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z', onClick: () => exportDoc('pdf') }),
+        IconButton({ id:'exportDOCX', title:'Export as Word', svgPath:'M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 14H7v-2h6v2zm3-4H7v-2h9v2zm-3-5V3.5L18.5 9H13z', onClick: () => exportDoc('docx') })
+      );
+      
+      // --- COMMAND BUTTONS ---
+      document.body.addEventListener('click', e => {
+        const btn = e.target.closest('[data-command]');
+        if (!btn) return;
+        e.preventDefault();
+        document.execCommand(btn.dataset.command, false, btn.dataset.value || null);
+        editor.focus();
+      });
+
+      // --- OUTLINE & WORD COUNT (PHASE 2) ---
+      const outlinePanel = document.getElementById('outline-panel');
+      const outlineList = document.getElementById('outline-list');
+      const wordCountEl = document.getElementById('word-count');
+      
+      document.getElementById('outline-toggle').addEventListener('click', () => {
+          outlinePanel.classList.toggle('visible');
+      });
+
+      function updateOutlineAndCount() {
+          const headings = editor.querySelectorAll('h2, h3');
+          outlineList.innerHTML = '';
+          headings.forEach(h => {
+              const li = document.createElement('li');
+              li.textContent = h.textContent;
+              li.style.paddingLeft = h.tagName === 'H3' ? '2rem' : '1rem';
+              li.onclick = () => h.scrollIntoView({ behavior: 'smooth' });
+              outlineList.appendChild(li);
+          });
+          const text = editor.innerText || '';
+          const words = text.trim().split(/\s+/).filter(Boolean);
+          wordCountEl.textContent = `${words.length} words`;
+      }
+      
+      // --- AUTO-SAVE SIMULATION & STATE CHANGES ---
+      let saveTimeout;
+      editor.addEventListener('input', () => {
+          clearTimeout(saveTimeout);
+          stateManager.setState({ isSaving: true });
+          saveTimeout = setTimeout(() => {
+              stateManager.setState({ isSaving: false });
+              updateOutlineAndCount();
+          }, 1500);
+      });
+      
+      stateManager.subscribe('stateChange', state => {
+          if (state.isSaving) {
+              saveStatusBtn.classList.add('saving');
+              saveStatusBtn.title = 'Saving...';
+          } else {
+              saveStatusBtn.classList.remove('saving');
+              saveStatusBtn.title = 'Saved';
+          }
+      });
+      
+      // --- COMMENT TOOLTIP (PHASE 4) ---
+      const commentTooltip = document.getElementById('comment-tooltip');
+      editor.addEventListener('mouseup', (e) => {
+          const selection = window.getSelection();
+          if (selection.toString().trim().length > 0) {
+              const range = selection.getRangeAt(0);
+              const rect = range.getBoundingClientRect();
+              commentTooltip.style.display = 'block';
+              commentTooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+              commentTooltip.style.top = `${rect.top - 35}px`;
+          } else {
+              commentTooltip.style.display = 'none';
+          }
+      });
+       document.addEventListener('mousedown', (e) => {
+          if (e.target !== commentTooltip) {
+              commentTooltip.style.display = 'none';
+          }
+       });
+    });
+  </script>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<!--
+    Author: Arsalan A. Khan
+    Application: FlowAI - Job-Fit Analyzer Beta v.1
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowAI - Job-Fit Analyzer</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- D3.js CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+        }
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6); /* slate-800 with opacity */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Custom scrollbar for a more modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+        /* Animation for result cards */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        /* D3 Infographic Styles */
+        .skill-bubble {
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+        .skill-text {
+            font-size: 12px;
+            font-weight: 500;
+            fill: #f8fafc; /* slate-50 */
+            pointer-events: none;
+            text-anchor: middle;
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased">
+    <!-- Background Gradient -->
+    <div class="absolute top-0 left-0 -z-10 h-full w-full bg-slate-900">
+        <div class="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8 md:py-12">
+
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+                FlowAI Job-Fit Analyzer
+            </h1>
+            <p class="mt-4 text-lg text-slate-400">Analyze your resume against any job description to get interview-ready.</p>
+        </header>
+
+        <!-- Input Section -->
+        <div class="max-w-5xl mx-auto">
+            <div class="glass-card rounded-xl shadow-2xl p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="resume-text" class="block text-sm font-medium text-slate-300 mb-2">Your Resume</label>
+                        <textarea id="resume-text" class="w-full p-3 bg-slate-900/50 border border-slate-700 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" rows="14" placeholder="Paste the full text of your resume here..."></textarea>
+                    </div>
+                    <div>
+                        <label for="job-desc-text" class="block text-sm font-medium text-slate-300 mb-2">Job Description</label>
+                        <textarea id="job-desc-text" class="w-full p-3 bg-slate-900/50 border border-slate-700 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" rows="14" placeholder="Paste the target job description here..."></textarea>
+                    </div>
+                </div>
+                
+                <button id="analyzeBtn" class="mt-6 w-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-semibold py-3 px-4 rounded-md shadow-lg hover:from-indigo-600 hover:to-cyan-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500 transition disabled:opacity-50">
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Analyze My Fit</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Error Message Display -->
+        <div id="error-message" class="hidden max-w-5xl mx-auto mt-4 bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg shadow-lg" role="alert">
+            <strong class="font-bold">Error:</strong>
+            <span class="block sm:inline" id="error-text"></span>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result-container" class="mt-10 max-w-5xl mx-auto hidden">
+            <!-- Analysis results will be dynamically injected here -->
+        </div>
+        
+        <!-- Disclaimer Section -->
+        <footer class="text-center mt-12 text-xs text-slate-500">
+            <p>Built by Arsalan A. Khan | AI-powered analysis is for guidance only. Always tailor your application materials carefully.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Author: Arsalan A. Khan
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultContainer = document.getElementById('result-container');
+        const spinner = document.getElementById('spinner');
+        const errorMessageDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        
+        const resumeTextInput = document.getElementById('resume-text');
+        const jobDescTextInput = document.getElementById('job-desc-text');
+
+        // --- Event Listener ---
+        analyzeBtn.addEventListener('click', handleAnalysis);
+
+        async function handleAnalysis() {
+            const resumeText = resumeTextInput.value.trim();
+            const jobDescText = jobDescTextInput.value.trim();
+
+            if (!resumeText) {
+                showError('Please paste your resume text.');
+                return;
+            }
+            if (!jobDescText) {
+                showError('Please paste the job description.');
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+            resultContainer.classList.add('hidden');
+            resultContainer.innerHTML = '';
+
+            try {
+                const prompt = `
+                    You are an expert career coach AI. A user will provide their resume and a target job description.
+                    Your task is to analyze the resume against the job description and return a structured JSON object with actionable feedback to help the user prepare for their application and interview.
+
+                    **Instructions:**
+                    1.  Return the output as a single, valid JSON object.
+                    2.  The JSON object must conform to the provided schema.
+                    3.  **infographicData**: Extract data for a visual infographic. This must include 'yearsOfExperience', a list of 'topSkills' with 'name' and 'proficiency' ("Expert", "Proficient", or "Familiar").
+                    4.  **jobFit**: Analyze how well the resume matches the job description. Provide a 'rating' ("High", "Medium", "Low") and a 'reasoning' that explains the rating.
+                    5.  **resumeFeedback**: Provide specific, actionable bullet points on how to improve the resume to better align with the job description. Focus on highlighting relevant projects or rephrasing experiences.
+                    6.  **suggestedKeywords**: Identify important keywords from the job description that are missing or underrepresented in the resume.
+                    7.  **interviewQuestions**: Generate 5-7 insightful interview questions the candidate should prepare for, based on their resume and the job requirements.
+
+                    **User's Resume:**
+                    ---
+                    ${resumeText}
+                    ---
+
+                    **Target Job Description:**
+                    ---
+                    ${jobDescText}
+                    ---
+                `;
+
+                const jsonResponse = await generateContent(prompt, getAnalysisSchema());
+                const results = JSON.parse(jsonResponse); 
+                displayResults(results);
+
+            } catch (error) {
+                console.error('An error occurred during analysis:', error);
+                showError(error.message || 'Failed to analyze. Please check the inputs and try again.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // --- Core API and Schema Functions ---
+        function getAnalysisSchema() {
+            return {
+                type: "OBJECT",
+                properties: {
+                    infographicData: {
+                        type: "OBJECT",
+                        properties: {
+                            yearsOfExperience: { type: "NUMBER" },
+                            topSkills: { type: "ARRAY", items: { type: "OBJECT", properties: { name: { type: "STRING" }, proficiency: { type: "STRING", enum: ["Expert", "Proficient", "Familiar"] } }, required: ["name", "proficiency"] } }
+                        },
+                        required: ["yearsOfExperience", "topSkills"]
+                    },
+                    jobFit: { type: "OBJECT", properties: { rating: { type: "STRING", enum: ["High", "Medium", "Low"] }, reasoning: { type: "STRING" } }, required: ["rating", "reasoning"] },
+                    resumeFeedback: { type: "ARRAY", items: { type: "STRING" } },
+                    suggestedKeywords: { type: "ARRAY", items: { type: "STRING" } },
+                    interviewQuestions: { type: "ARRAY", items: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["Technical", "Behavioral", "Situational"] }, question: { type: "STRING" } }, required: ["type", "question"] } }
+                },
+                required: ["infographicData", "jobFit", "resumeFeedback", "suggestedKeywords", "interviewQuestions"]
+            };
+        }
+
+        async function generateContent(prompt, schema) {
+            const apiKey = ""; // API key is handled by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json();
+                console.error("API Error Response:", errorBody);
+                throw new Error(`API request failed with status ${response.status}.`);
+            }
+            
+            const result = await response.json();
+
+            if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts[0].text) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                console.error("Unexpected API response structure:", result);
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                     throw new Error(`Request was blocked: ${result.promptFeedback.blockReason}. Please adjust your prompt.`);
+                }
+                throw new Error('The AI returned an empty or invalid response.');
+            }
+        }
+
+        // --- UI Display Functions ---
+        function displayResults(results) {
+            resultContainer.innerHTML = '';
+            
+            const jobFitCard = createCard('Job-Fit Analysis', `
+                <div class="flex items-center mb-3">
+                    <span class="text-lg font-semibold px-4 py-1 rounded-full ${getRatingColor(results.jobFit.rating)}">${results.jobFit.rating} Match</span>
+                </div>
+                <p class="text-slate-400">${results.jobFit.reasoning}</p>
+            `);
+
+            const infographicCard = createCard('Candidate Snapshot', '<div id="infographic-container" class="w-full h-72"></div>');
+
+            let feedbackHtml = '<ul class="space-y-2 list-disc list-inside text-slate-400">';
+            results.resumeFeedback.forEach(item => {
+                feedbackHtml += `<li>${item}</li>`;
+            });
+            feedbackHtml += '</ul>';
+            const feedbackCard = createCard('Resume Feedback', feedbackHtml);
+
+            let keywordsHtml = `<p class="text-sm text-slate-400 mb-3">Consider weaving these keywords from the job description into your resume.</p><div class="flex flex-wrap gap-2">`;
+            if (results.suggestedKeywords && results.suggestedKeywords.length > 0) {
+                results.suggestedKeywords.forEach(keyword => {
+                    keywordsHtml += `<span class="bg-cyan-400/10 text-cyan-300 text-xs font-medium px-2.5 py-1 rounded-full">${keyword}</span>`;
+                });
+            } else {
+                keywordsHtml += `<p class="text-slate-400">Your resume appears to cover the main keywords well!</p>`;
+            }
+            keywordsHtml += '</div>';
+            const keywordsCard = createCard('Suggested Keywords', keywordsHtml);
+
+            let questionsHtml = '<ul class="space-y-3">';
+            results.interviewQuestions.forEach(q => {
+                questionsHtml += `<li class="flex items-start"><span class="flex-shrink-0 text-xs font-medium px-2 py-0.5 rounded-full mr-3 mt-1 ${getQuestionTypeColor(q.type)}">${q.type}</span><p class="text-slate-300">${q.question}</p></li>`;
+            });
+            questionsHtml += '</ul>';
+            const questionsCard = createCard('Potential Interview Questions', questionsHtml);
+
+            resultContainer.append(jobFitCard, infographicCard, feedbackCard, keywordsCard, questionsCard);
+            resultContainer.classList.remove('hidden');
+
+            renderInfographic(results.infographicData);
+        }
+        
+        function renderInfographic(data) {
+            const container = d3.select("#infographic-container");
+            if (container.empty()) return;
+
+            const width = container.node().getBoundingClientRect().width;
+            const height = 288; // h-72
+            const svg = container.append("svg").attr("width", width).attr("height", height);
+
+            // Skills Bubble Chart
+            const skillsData = data.topSkills || [];
+            const proficiencyScale = d3.scaleOrdinal().domain(["Familiar", "Proficient", "Expert"]).range([30, 45, 60]);
+            const colorScale = d3.scaleOrdinal().domain(["Familiar", "Proficient", "Expert"]).range(["#22d3ee", "#67e8f9", "#a5f3fc"]);
+
+            const simulation = d3.forceSimulation(skillsData)
+                .force("x", d3.forceX(width / 2).strength(0.1))
+                .force("y", d3.forceY(height / 2 + 10).strength(0.1))
+                .force("collide", d3.forceCollide(d => proficiencyScale(d.proficiency) + 2))
+                .stop();
+
+            for (let i = 0; i < 150; ++i) simulation.tick();
+
+            const bubbles = svg.append("g")
+                .selectAll("circle")
+                .data(skillsData)
+                .enter()
+                .append("g")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            bubbles.append("circle")
+                .attr("r", d => proficiencyScale(d.proficiency))
+                .style("fill", d => colorScale(d.proficiency))
+                .style("stroke", "#0f172a")
+                .attr("class", "skill-bubble");
+            
+            bubbles.append("text")
+                 .attr("class", "skill-text")
+                 .style("fill", "#0f172a")
+                 .attr("dy", "0.3em")
+                 .text(d => d.name.length > proficiencyScale(d.proficiency)/4 ? d.name.substring(0, Math.floor(proficiencyScale(d.proficiency)/4)) + '...' : d.name)
+                 .append("title")
+                 .text(d => `${d.name} (${d.proficiency})`);
+
+            // Years of Experience Text
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .style("font-size", "1.5rem")
+                .style("font-weight", "800")
+                .style("fill", "url(#exp-gradient)");
+            
+            const gradient = svg.append("defs").append("linearGradient").attr("id", "exp-gradient").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "0%");
+            gradient.append("stop").attr("offset", "0%").style("stop-color", "#67e8f9");
+            gradient.append("stop").attr("offset", "100%").style("stop-color", "#a5f3fc");
+            
+            svg.select("text").text(`~${Math.round(data.yearsOfExperience)} Years of Experience`);
+        }
+
+        function createCard(title, content) {
+            const card = document.createElement('div');
+            card.className = "glass-card p-6 rounded-xl mb-6 shadow-lg animate-fade-in";
+            card.innerHTML = `<h3 class="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-cyan-300 mb-4">${title}</h3>${content}`;
+            return card;
+        }
+
+        function getRatingColor(rating) {
+            const colors = { High: 'bg-green-400/10 text-green-300 border border-green-400/20', Medium: 'bg-amber-400/10 text-amber-300 border-amber-400/20', Low: 'bg-red-400/10 text-red-300 border-red-400/20' };
+            return colors[rating] || 'bg-slate-400/10 text-slate-300';
+        }
+
+        function getQuestionTypeColor(type) {
+            const colors = { Technical: 'bg-sky-400/10 text-sky-300', Behavioral: 'bg-amber-400/10 text-amber-300', Situational: 'bg-rose-400/10 text-rose-300' };
+            return colors[type] || 'bg-slate-400/10 text-slate-300';
+        }
+
+        function setLoading(isLoading) {
+            analyzeBtn.disabled = isLoading;
+            if (isLoading) {
+                spinner.classList.remove('hidden');
+                analyzeBtn.querySelector('span').textContent = 'Analyzing...';
+            } else {
+                spinner.classList.add('hidden');
+                analyzeBtn.querySelector('span').textContent = 'Analyze My Fit';
+            }
+        }
+        
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessageDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessageDiv.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
+
